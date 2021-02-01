@@ -39,23 +39,31 @@ protected:
     void PassOn(unique_ptr<Email> email) const {
         if (_next != nullptr) {
             _next->Process(move(email));
+            cout << "=============== Passed to the next Worker ==============\n";
         }
     }
 
 public:
     void SetNext(unique_ptr<Worker> next)
     {
-        if (_next)
+        if (_next) {
             _next->SetNext(move(next));
-        else
+            cout << "=============== Set Next Worker ==============\n";
+        } 
+        else {
             _next = move(next);
+            cout << "=============== END ==============\n";
+        }
+            
     }
 };
 
 class Reader : public Worker {
 public:
     // реализуйте класс
-    Reader(istream& in) : _in(in) {}
+    Reader(istream& in) : _in(in) {
+        cout << "=============== Reader created ==============\n";
+    }
     void Process(unique_ptr<Email> email) override {}
 
     void Run() override
@@ -67,6 +75,7 @@ public:
             getline(_in, email->body);
             if (!email->body.empty()) {
                 PassOn(move(email));
+                cout << "=============== Reader passed email ==============\n";
             }
         }
     }
@@ -79,14 +88,14 @@ class Filter : public Worker {
 public:
     using Function = function<bool(const Email&)>;
     // реализуйте класс
-    Filter(Function& filter)
-        : _filter{ filter } 
-    {}
+    Filter(Function& filter) : _filter{ filter } {
+        cout << "=============== Filter created ==============\n"; 
+    }
 
-    void Process(unique_ptr<Email> email) override
-    {
+    void Process(unique_ptr<Email> email) override {
         if (_filter(*email)) {
             PassOn(move(email));
+            cout << "=============== Filter passed email ==============\n";
         }
     }
 
@@ -97,11 +106,10 @@ private:
 class Copier : public Worker {
 public:
     // реализуйте класс
-    //explicit Copier(const string& recipient) : recipient_(recipient) {}
-
-    Copier(string&& recipient)
-        : _recipient{ recipient }
-    {}
+    explicit Copier(const string& recipient) : _recipient(recipient) {
+    //Copier(string&& recipient) : _recipient(recipient) {
+        cout << "=============== Copier created ==============\n";
+    }
 
     void Process(unique_ptr<Email> email) override
     {
@@ -110,9 +118,13 @@ public:
             unique_ptr<Email> cc_email = make_unique<Email>(Email{ email->from, _recipient, email->body });
             PassOn(move(email));
             PassOn(move(cc_email));
+            "=============== Copier passed original and cc emails ==============\n";
         }
-        else
+        else {
             PassOn(move(email));
+            "=============== Copier passed original_email ==============\n";
+        }
+            
     }
 
 private:
@@ -122,16 +134,16 @@ private:
 class Sender : public Worker {
 public:
     // реализуйте класс
-    Sender(ostream& out)
-        : _out{ out }
-    {}
+    Sender(ostream& out) : _out(out) {
+       cout << "=============== Sender created ==============\n";
+    }
 
-    void Process(unique_ptr<Email> email) override
-    {
+    void Process(unique_ptr<Email> email) override {
         _out << email->from << '\n'
-            << email->to << '\n'
-            << email->body << "\n";
+             << email->to << '\n'
+             << email->body << '\n';
         PassOn(move(email));
+        "=============== Sender passed email ==============\n";
     }
 
 private:
@@ -144,23 +156,27 @@ public:
     // добавляет в качестве первого обработчика Reader
     explicit PipelineBuilder(istream& in) {
         _pipeline = make_unique<Reader>(in);
+        cout << "Reader -> ";
     }
 
     // добавляет новый обработчик Filter
     PipelineBuilder& FilterBy(Filter::Function filter) {
         _pipeline->SetNext(make_unique<Filter>(filter));
+        cout << "Filter -> ";
         return *this;
     }
 
     // добавляет новый обработчик Copier
     PipelineBuilder& CopyTo(string recipient) {
         _pipeline->SetNext(make_unique<Copier>(move(recipient)));
+        cout << "Copier -> ";
         return *this;
     }
 
     // добавляет новый обработчик Sender
     PipelineBuilder& Send(ostream& out) {
         _pipeline->SetNext(make_unique<Sender>(out));
+        cout << "Sender -> ";
         return *this;
     }
 
@@ -233,8 +249,8 @@ void TestSanity() {
         );
     istringstream inStream(input);
     ostringstream outStream;
-    cout << input
-         << "=======================================================" << endl;
+    //cout << input
+    //     << "=======================================================" << endl;
 
     PipelineBuilder builder(inStream);
     builder.FilterBy([](const Email& email) {
