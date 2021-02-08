@@ -1,9 +1,9 @@
-﻿// Pipeline.cpp : https://www.coursera.org/ C++ Development Fundamentals: Brown Belt, Week 3.
+// Pipeline.cpp : https://www.coursera.org/ C++ Development Fundamentals: Brown Belt, Week 3.
 // Task: Chain of responsibility - develop a pipeline of email handlers
 //
 
-//#include "test_runner.h"
-#include "..\..\test_runner.h"
+#include "test_runner.h"
+//#include "..\..\test_runner.h"
 
 #include <functional>
 #include <memory>
@@ -28,13 +28,13 @@ public:
     virtual void Process(unique_ptr<Email> email) = 0;
     virtual void Run()
     {
-        // только первому worker-у в пайплайне нужно это имплементировать
+        // ?????? ??????? worker-? ? ????????? ????? ??? ????????????????
         throw logic_error("Unimplemented");
     }
 
 protected:
-    // реализации должны вызывать PassOn, чтобы передать объект дальше
-    // по цепочке обработчиков
+    // ?????????? ?????? ???????? PassOn, ????? ???????? ?????? ??????
+    // ?? ??????? ????????????
 
     void PassOn(unique_ptr<Email> email) const {
         if (_next != nullptr) {
@@ -60,7 +60,7 @@ public:
 
 class Reader : public Worker {
 public:
-    // реализуйте класс
+    // ?????????? ?????
     Reader(istream& in) : _in(in) {
         //cout << "=============== Reader created ==============\n";
     }
@@ -87,7 +87,7 @@ private:
 class Filter : public Worker {
 public:
     using Function = function<bool(const Email&)>;
-    // реализуйте класс
+    // ?????????? ?????
     Filter(const Function& filter) : _filter{ filter } {
         //cout << "=============== Filter created ==============\n"; 
     }
@@ -105,7 +105,7 @@ private:
 
 class Copier : public Worker {
 public:
-    // реализуйте класс
+    // ?????????? ?????
     explicit Copier(const string& recipient) : _recipient(recipient) {
     //Copier(string&& recipient) : _recipient(recipient) {
         //cout << "=============== Copier created ==============\n";
@@ -133,7 +133,7 @@ private:
 
 class Sender : public Worker {
 public:
-    // реализуйте класс
+    // ?????????? ?????
     Sender(ostream& out) : _out(out) {
        //cout << "=============== Sender created ==============\n";
     }
@@ -150,37 +150,37 @@ private:
     ostream& _out;
 };
 
-// реализуйте класс
+// ?????????? ?????
 class PipelineBuilder {
 public:
-    // добавляет в качестве первого обработчика Reader
+    // ????????? ? ???????? ??????? ??????????? Reader
     explicit PipelineBuilder(istream& in) {
         _pipeline = make_unique<Reader>(in);
         //cout << "Reader -> ";
     }
 
-    // добавляет новый обработчик Filter
+    // ????????? ????? ?????????? Filter
     PipelineBuilder& FilterBy(Filter::Function filter) {
         _pipeline->SetNext(make_unique<Filter>(filter));
         //cout << "Filter -> ";
         return *this;
     }
 
-    // добавляет новый обработчик Copier
+    // ????????? ????? ?????????? Copier
     PipelineBuilder& CopyTo(string recipient) {
         _pipeline->SetNext(make_unique<Copier>(move(recipient)));
         //cout << "Copier -> ";
         return *this;
     }
 
-    // добавляет новый обработчик Sender
+    // ????????? ????? ?????????? Sender
     PipelineBuilder& Send(ostream& out) {
         _pipeline->SetNext(make_unique<Sender>(out));
         //cout << "Sender -> ";
         return *this;
     }
 
-    // возвращает готовую цепочку обработчиков
+    // ?????????? ??????? ??????? ????????????
     unique_ptr<Worker> Build() { 
         return move(_pipeline); 
     }
