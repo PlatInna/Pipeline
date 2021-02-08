@@ -64,7 +64,7 @@ public:
     Reader(istream& in) : _in(in) {
         //cout << "=============== Reader created ==============\n";
     }
-    void Process(unique_ptr<Email> email) override {}
+    void Process(unique_ptr<Email> email) override {} // nothing to do, just for compiling
 
     void Run() override
     {
@@ -73,7 +73,7 @@ public:
             getline(_in, email->from);
             getline(_in, email->to);
             getline(_in, email->body);
-            if (_in) {
+            if (_in) { // в реальных программах здесь стоит раздельно проверять badbit и eof
                 PassOn(move(email));
                 //cout << "=============== Reader passed email ==============\n";
             }
